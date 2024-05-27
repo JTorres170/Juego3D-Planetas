@@ -18,26 +18,26 @@ public static class SaveSystem
     // Guardar
     public static IEnumerator SaveGame(PlayerData playerData, FirstPlanetData fpData, int slot)
     {
-        string json_playerData =  JsonUtility.ToJson(playerData);
-        string json_fpData =  JsonUtility.ToJson(fpData);
+        GameData gameData = new GameData(playerData, fpData);
 
-        byte[] encryptedPlayerData = EncryptStringToBytes_Aes(json_playerData);
-        byte[] encryptedFirstPlanetData = EncryptStringToBytes_Aes(json_fpData);
+        string json_gameData =  JsonUtility.ToJson(gameData);
+
+        byte[] encryptedGameData = EncryptStringToBytes_Aes(json_gameData);
 
         switch (slot)
         {
             case 1:
-                File.WriteAllBytes(savePathSlot1, encryptedPlayerData);
+                File.WriteAllBytes(savePathSlot1, encryptedGameData);
                 PlayerPrefs.SetString("slotDate1", System.DateTime.Now.ToString());
 
                 break;
             case 2:
-                File.WriteAllBytes(savePathSlot2, encryptedPlayerData);
+                File.WriteAllBytes(savePathSlot2, encryptedGameData);
                 PlayerPrefs.SetString("slotDate2", System.DateTime.Now.ToString());
 
                 break;
             case 3:
-                File.WriteAllBytes(savePathSlot3, encryptedPlayerData);
+                File.WriteAllBytes(savePathSlot3, encryptedGameData);
                 PlayerPrefs.SetString("slotDate3", System.DateTime.Now.ToString());
 
                 break;
@@ -69,7 +69,9 @@ public static class SaveSystem
         if (encryptedData != null)
         {
             string decryptedData = DecryptStringFromBytes_Aes(encryptedData);
-            JsonUtility.FromJsonOverwrite(decryptedData, playerData);
+            GameData gameData = JsonUtility.FromJson<GameData>(decryptedData);
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.playerData), playerData);
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.firstPlanetData), fpData);
         }
 
         yield return null;
@@ -126,5 +128,18 @@ public static class SaveSystem
             }
         }
         return plaintext;
+    }
+}
+
+[System.Serializable]
+public class GameData
+{
+    public PlayerData playerData;
+    public FirstPlanetData firstPlanetData;
+
+    public GameData(PlayerData playerData, FirstPlanetData firstPlanetData)
+    {
+        this.playerData = playerData;
+        this.firstPlanetData = firstPlanetData;
     }
 }
