@@ -15,12 +15,14 @@ public static class SaveSystem
     private static readonly byte[] aesKey = Encoding.UTF8.GetBytes("ClaveSecretisima");
     private static readonly byte[] aesIV = Encoding.UTF8.GetBytes("ClaveSecretisima");
 
+    private static GameData gameData;
+
     // Guardar
     public static IEnumerator SaveGame(PlayerData playerData, FirstPlanetData fpData, int slot)
     {
-        GameData gameData = new GameData(playerData, fpData);
+        gameData = new GameData(playerData, fpData);
 
-        string json_gameData = JsonUtility.ToJson(playerData);
+        string json_gameData = JsonUtility.ToJson(fpData);
 
         byte[] encryptedGameData = EncryptStringToBytes_Aes(json_gameData);
 
@@ -51,6 +53,7 @@ public static class SaveSystem
     public static IEnumerator LoadGame(PlayerData playerData, FirstPlanetData fpData, int slot)
     {
         byte[] encryptedData;
+        GameData gameData = new GameData(playerData, fpData);
 
         switch (slot)
         {
@@ -71,9 +74,14 @@ public static class SaveSystem
         {
             string decryptedData = DecryptStringFromBytes_Aes(encryptedData);
             Debug.Log(decryptedData);
-            JsonUtility.FromJsonOverwrite(decryptedData, playerData);
-            Debug.Log(playerData.playerPosition);
-            // GameData gameData = JsonUtility.FromJson<GameData>(decryptedData);
+            //JsonUtility.FromJsonOverwrite(decryptedData, gameData);
+            //Debug.Log(gameData.playerData.playerPosition);
+            
+
+            JsonUtility.FromJsonOverwrite(decryptedData, fpData);
+            //JsonUtility.FromJsonOverwrite(decryptedData, playerData);
+            //Debug.Log(playerData.playerPosition);
+
             // JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.playerData), playerData);
             // JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.firstPlanetData), fpData);
         }

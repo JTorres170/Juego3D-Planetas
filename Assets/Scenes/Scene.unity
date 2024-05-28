@@ -1781,7 +1781,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerData: {fileID: 11400000, guid: bb1bb19a9bf90694892edc819dfddb48, type: 2}
   fpData: {fileID: 11400000, guid: 98cf134a1704d634fb57ac07a869b864, type: 2}
-  player: {fileID: 0}
 --- !u!1 &1610403124
 GameObject:
   m_ObjectHideFlags: 0

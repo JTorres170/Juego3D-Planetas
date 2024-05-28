@@ -44,6 +44,7 @@ public class GenTest : MonoBehaviour
 	System.Diagnostics.Stopwatch timer_processVertexData;
 	RenderTexture originalMap;
 
+	// Serializable object
 	public FirstPlanetData fpData;
 
 	void RandomGenerationVar()
@@ -347,6 +348,13 @@ public class GenTest : MonoBehaviour
 		texture.name = name;
 	}
 
-
+	public void LoadGenerationData()
+	{
+		for (int i = 0; i < chunks.Length; i++)
+		{
+			Chunk chunk = fpData.chunks[i];
+			GenerateChunk(chunk);
+		}
+	}
 
 }
