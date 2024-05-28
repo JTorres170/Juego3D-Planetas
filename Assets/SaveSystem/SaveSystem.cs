@@ -20,7 +20,7 @@ public static class SaveSystem
     {
         GameData gameData = new GameData(playerData, fpData);
 
-        string json_gameData =  JsonUtility.ToJson(gameData);
+        string json_gameData = JsonUtility.ToJson(playerData);
 
         byte[] encryptedGameData = EncryptStringToBytes_Aes(json_gameData);
 
@@ -70,9 +70,12 @@ public static class SaveSystem
         if (encryptedData != null)
         {
             string decryptedData = DecryptStringFromBytes_Aes(encryptedData);
-            GameData gameData = JsonUtility.FromJson<GameData>(decryptedData);
-            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.playerData), playerData);
-            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.firstPlanetData), fpData);
+            Debug.Log(decryptedData);
+            JsonUtility.FromJsonOverwrite(decryptedData, playerData);
+            Debug.Log(playerData.playerPosition);
+            // GameData gameData = JsonUtility.FromJson<GameData>(decryptedData);
+            // JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.playerData), playerData);
+            // JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.firstPlanetData), fpData);
         }
 
         Debug.Log("Data from slot " + slot + " loaded correctly");

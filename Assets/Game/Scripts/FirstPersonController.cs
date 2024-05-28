@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using System.Collections;
 
@@ -358,5 +357,11 @@ public class FirstPersonController : MonoBehaviour
 			Gizmos.DrawRay(castOrigin - upDir * groundedRayRadius, -upDir * groundedRayDst);
 
 		}
+	}
+
+	public void LoadPlayerData()
+	{
+		transform.position = playerData.playerPosition;
+		transform.rotation = playerData.playerRotation;
 	}
 }
