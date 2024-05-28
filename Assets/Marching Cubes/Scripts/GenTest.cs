@@ -199,19 +199,11 @@ public class GenTest : MonoBehaviour
 
 	void Update()
 	{
-
-		// TODO: move somewhere more sensible
 		material.SetTexture("DensityTex", originalMap);
 		material.SetFloat("oceanRadius", FindObjectOfType<Water>().radius);
 		material.SetFloat("planetBoundsSize", boundsSize);
 
-		/*
-		if (Input.GetKeyDown(KeyCode.G))
-		{
-			Debug.Log("Generate");
-			GenerateAllChunks();
-		}
-		*/
+		fpData.chunks = chunks;
 	}
 
 

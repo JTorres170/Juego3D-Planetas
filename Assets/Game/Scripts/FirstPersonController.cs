@@ -5,6 +5,7 @@ using System.Collections;
 public class FirstPersonController : MonoBehaviour
 {
 
+	// Variables for animations
 	public enum MoveState
 	{
 		Idle,
@@ -13,7 +14,7 @@ public class FirstPersonController : MonoBehaviour
 		Swim
 	}
 
-	// public vars
+	// Public variables
 	public float gravity = 15;
 	public float buoyancy = 6;
 	public float mouseSensitivityX = 1;
@@ -26,7 +27,7 @@ public class FirstPersonController : MonoBehaviour
 	public Vector2 lookAngleMinMax = new Vector2(-75, 80);
 	public LayerMask terrainMask;
 
-	// System vars
+	// System variables
 	public float groundedRaySizeFactor = 0.7f;
 	public float groundedRayLength = 0.1f;
 	public bool grounded;
@@ -40,12 +41,15 @@ public class FirstPersonController : MonoBehaviour
 	public MoveState currentMoveState { get; private set; }
 	float waterRadius;
 	bool underwater;
+	bool onPauseMenu = false;
 
 	bool debug_stopMovement;
 
 	// Scriptable object
 	public PlayerData playerData;
 
+	// Pause menu
+	public GameObject pauseMenu;
 
 	void Awake()
 	{
@@ -73,11 +77,13 @@ public class FirstPersonController : MonoBehaviour
 		{
 			transform.position = new Vector3(spawnPoint.x, hit.point.y + 5, spawnPoint.z);
 		}
-		
+
+		pauseMenu.SetActive(false);		
 	}
 
 	void Update()
 	{
+		// Feature for development
 		if (Input.GetKeyDown(KeyCode.Escape))
 		{
 			debug_stopMovement = !debug_stopMovement;
@@ -91,23 +97,39 @@ public class FirstPersonController : MonoBehaviour
 				rigidBody.velocity = Vector3.zero;
 			}
 
-			if (!Application.isEditor)
+		}
+
+		if (Input.GetKeyDown(KeyCode.P))
+		{
+			if (onPauseMenu)
 			{
-				Application.Quit();
+				Cursor.visible = false;
+				pauseMenu.SetActive(false);
+				onPauseMenu = false;
+			}
+			else
+			{
+				Cursor.visible = true;
+				pauseMenu.SetActive(true);
+				onPauseMenu = true;
 			}
 
 		}
-		if (Input.GetKeyDown(KeyCode.P))
+
+		// Jump
+		if (Input.GetButtonDown("Jump"))
 		{
-			Debug.Break();
+			if (grounded)
+			{
+				rigidBody.AddForce(transform.up * jumpForce, ForceMode.VelocityChange);
+			}
 		}
+
 
 		if (debug_stopMovement)
 		{
 			return;
 		}
-
-
 
 		underwater = (cameraTransform.position - Vector3.zero).magnitude < waterRadius + 0.25f;
 
@@ -154,15 +176,6 @@ public class FirstPersonController : MonoBehaviour
 		Vector3 targetMoveVelocity = moveDir * desiredMoveSpeed;
 		desiredLocalVelocity = Vector3.SmoothDamp(desiredLocalVelocity, targetMoveVelocity, ref smoothMoveVelocity, .15f);
 
-		// Jump
-		if (Input.GetButtonDown("Jump"))
-		{
-			if (grounded)
-			{
-				rigidBody.AddForce(transform.up * jumpForce, ForceMode.VelocityChange);
-			}
-		}
-
 		// Grounded check
 		Ray ray = new Ray(transform.position, -transform.up);
 		RaycastHit hit;
@@ -179,6 +192,7 @@ public class FirstPersonController : MonoBehaviour
 
 		grounded = IsGrounded();
 
+		// Setting variables for the scriptable object
 		playerData.playerPosition = transform.position;
 		playerData.playerRotation = transform.rotation;
 
