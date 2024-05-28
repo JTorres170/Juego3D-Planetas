@@ -99,18 +99,23 @@ public class FirstPersonController : MonoBehaviour
 
 		}
 
+		// Pause menu
 		if (Input.GetKeyDown(KeyCode.P))
 		{
+			debug_stopMovement = !debug_stopMovement;
+
 			if (onPauseMenu)
 			{
 				Cursor.visible = false;
 				pauseMenu.SetActive(false);
+				Cursor.lockState = CursorLockMode.Locked;
 				onPauseMenu = false;
 			}
 			else
 			{
 				Cursor.visible = true;
 				pauseMenu.SetActive(true);
+				Cursor.lockState = CursorLockMode.None;
 				onPauseMenu = true;
 			}
 

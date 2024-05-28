@@ -43,6 +43,7 @@ public static class SaveSystem
                 break;
         }
 
+        Debug.Log("Data saved at " + slot);
         yield return null;
     }
 
@@ -74,6 +75,7 @@ public static class SaveSystem
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(gameData.firstPlanetData), fpData);
         }
 
+        Debug.Log("Data from slot " + slot + " loaded correctly");
         yield return null;
     }
 
