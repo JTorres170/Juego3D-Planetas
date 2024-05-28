@@ -44,12 +44,15 @@ public class GenTest : MonoBehaviour
 	System.Diagnostics.Stopwatch timer_processVertexData;
 	RenderTexture originalMap;
 
+	public FirstPlanetData fpData;
+
 	void RandomGenerationVar()
 	{
 		noiseScale = UnityEngine.Random.Range(0.1f, 1.0f);
 		noiseHeightMultiplier = UnityEngine.Random.Range(0.030f, 0.09f);
-		Debug.Log(noiseScale);
-		Debug.Log(noiseHeightMultiplier);
+		
+		fpData.noiseScale = noiseScale;
+		fpData.noiseHeightMultiplier = noiseHeightMultiplier;
 	}
 
 	public void GenerateTerrain()

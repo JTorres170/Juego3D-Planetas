@@ -371,6 +371,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 4ea24032fa3e71a4fae0169d57697b45, type: 2}
   rawDensityTexture: {fileID: 382890195}
   processedDensityTexture: {fileID: 1421471384}
+  fpData: {fileID: 11400000, guid: 98cf134a1704d634fb57ac07a869b864, type: 2}
 --- !u!4 &394546156
 Transform:
   m_ObjectHideFlags: 0
@@ -558,6 +559,7 @@ MonoBehaviour:
   groundedRaySizeFactor: 0.8
   groundedRayLength: 0.2
   grounded: 0
+  playerData: {fileID: 11400000, guid: bb1bb19a9bf90694892edc819dfddb48, type: 2}
 --- !u!114 &925745562
 MonoBehaviour:
   m_ObjectHideFlags: 0

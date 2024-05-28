@@ -4,6 +4,5 @@ using UnityEngine;
 public class PlayerData : ScriptableObject
 {
     public Vector3 playerPosition;
-    public float mouseSensitivityX;
-	public float mouseSensitivityY;
+    public Quaternion playerRotation;
 }

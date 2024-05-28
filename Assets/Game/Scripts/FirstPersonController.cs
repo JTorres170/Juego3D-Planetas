@@ -43,6 +43,9 @@ public class FirstPersonController : MonoBehaviour
 
 	bool debug_stopMovement;
 
+	// Scriptable object
+	public PlayerData playerData;
+
 
 	void Awake()
 	{
@@ -175,6 +178,9 @@ public class FirstPersonController : MonoBehaviour
 		}
 
 		grounded = IsGrounded();
+
+		playerData.playerPosition = transform.position;
+		playerData.playerRotation = transform.rotation;
 
 	}
 
