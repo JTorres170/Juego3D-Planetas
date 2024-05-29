@@ -6,6 +6,5 @@ public class FirstPlanetData : ScriptableObject
     public float noiseScale;
     public float noiseHeightMultiplier;
     public Chunk[] chunks;
-
     
 }

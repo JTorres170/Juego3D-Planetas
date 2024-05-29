@@ -24,23 +24,23 @@ public static class SaveSystem
 
         string json_gameData = JsonUtility.ToJson(fpData);
 
-        byte[] encryptedGameData = EncryptStringToBytes_Aes(json_gameData);
+        // byte[] encryptedGameData = EncryptStringToBytes_Aes(json_gameData);
 
         switch (slot)
         {
             case 1:
-                File.WriteAllBytes(savePathSlot1, encryptedGameData);
+                File.WriteAllText(savePathSlot1, json_gameData);
                 PlayerPrefs.SetString("slotDate1", System.DateTime.Now.ToString());
 
                 break;
             case 2:
-                File.WriteAllBytes(savePathSlot2, encryptedGameData);
-                PlayerPrefs.SetString("slotDate2", System.DateTime.Now.ToString());
+                //File.WriteAllBytes(savePathSlot2, encryptedGameData);
+                //PlayerPrefs.SetString("slotDate2", System.DateTime.Now.ToString());
 
                 break;
             case 3:
-                File.WriteAllBytes(savePathSlot3, encryptedGameData);
-                PlayerPrefs.SetString("slotDate3", System.DateTime.Now.ToString());
+                //File.WriteAllBytes(savePathSlot3, encryptedGameData);
+                //PlayerPrefs.SetString("slotDate3", System.DateTime.Now.ToString());
 
                 break;
         }
@@ -52,19 +52,20 @@ public static class SaveSystem
     // Cargar
     public static IEnumerator LoadGame(PlayerData playerData, FirstPlanetData fpData, int slot)
     {
-        byte[] encryptedData;
+        // byte[] encryptedData;
+        string encryptedData = "";
         GameData gameData = new GameData(playerData, fpData);
 
         switch (slot)
         {
             case 1:
-                encryptedData = File.ReadAllBytes(savePathSlot1);
+                encryptedData = File.ReadAllText(savePathSlot1);
                 break;
             case 2:
-                encryptedData = File.ReadAllBytes(savePathSlot2);
+                //encryptedData = File.ReadAllBytes(savePathSlot2);
                 break;
             case 3:
-                encryptedData = File.ReadAllBytes(savePathSlot3);
+                //encryptedData = File.ReadAllBytes(savePathSlot3);
                 break;
             default:
                 yield break;
@@ -72,13 +73,13 @@ public static class SaveSystem
 
         if (encryptedData != null)
         {
-            string decryptedData = DecryptStringFromBytes_Aes(encryptedData);
-            Debug.Log(decryptedData);
+            // string decryptedData = DecryptStringFromBytes_Aes(encryptedData);
+
             //JsonUtility.FromJsonOverwrite(decryptedData, gameData);
             //Debug.Log(gameData.playerData.playerPosition);
             
 
-            JsonUtility.FromJsonOverwrite(decryptedData, fpData);
+            JsonUtility.FromJsonOverwrite(encryptedData, fpData);
             //JsonUtility.FromJsonOverwrite(decryptedData, playerData);
             //Debug.Log(playerData.playerPosition);
 
