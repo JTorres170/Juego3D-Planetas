@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 public class GenTest : MonoBehaviour
 {
@@ -63,6 +64,7 @@ public class GenTest : MonoBehaviour
 
 	void Start()
 	{
+		Debug.Log("Generating terrain...");
 		RandomGenerationVar();
 		InitTextures();
 		CreateBuffers();
@@ -76,6 +78,11 @@ public class GenTest : MonoBehaviour
 		ComputeHelper.CreateRenderTexture3D(ref originalMap, processedDensityTexture);
 		ComputeHelper.CopyRenderTexture3D(processedDensityTexture, originalMap);
 
+	}
+
+	void LoadSave()
+	{
+		SceneManager.LoadScene( SceneManager.GetActiveScene().name );
 	}
 
 	void InitTextures()
@@ -203,8 +210,6 @@ public class GenTest : MonoBehaviour
 		material.SetTexture("DensityTex", originalMap);
 		material.SetFloat("oceanRadius", FindObjectOfType<Water>().radius);
 		material.SetFloat("planetBoundsSize", boundsSize);
-
-		fpData.chunks = chunks;
 	}
 
 
@@ -350,11 +355,7 @@ public class GenTest : MonoBehaviour
 
 	public void LoadGenerationData()
 	{
-		for (int i = 0; i < chunks.Length; i++)
-		{
-			Chunk chunk = fpData.chunks[i];
-			GenerateChunk(chunk);
-		}
+		LoadSave();
 	}
 
 }
