@@ -45,6 +45,8 @@ public class GenTest : MonoBehaviour
 	System.Diagnostics.Stopwatch timer_processVertexData;
 	RenderTexture originalMap;
 
+	public GameObject cubePrefab;
+
 	// Serializable object
 	public FirstPlanetData fpData;
 
@@ -77,7 +79,7 @@ public class GenTest : MonoBehaviour
 
 		ComputeHelper.CreateRenderTexture3D(ref originalMap, processedDensityTexture);
 		ComputeHelper.CopyRenderTexture3D(processedDensityTexture, originalMap);
-
+		GenerateRandomPrefabs();
 	}
 
 	void LoadSave()
@@ -352,6 +354,31 @@ public class GenTest : MonoBehaviour
 		texture.filterMode = FilterMode.Bilinear;
 		texture.name = name;
 	}
+
+	public void GenerateRandomPrefabs()
+	{
+		float spawnProbability = 0.0005f;
+		foreach (Chunk chunk in chunks)
+        {
+            Mesh mesh = chunk.mesh;
+            if (mesh == null || mesh.vertexCount == 0) continue;
+
+            Vector3[] vertices = mesh.vertices;
+			Vector3[] normals = mesh.normals;
+            Transform chunkTransform = chunk.filter.transform;
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                if (UnityEngine.Random.value < spawnProbability)
+                {
+                    Vector3 worldPosition = chunkTransform.TransformPoint(vertices[i]);
+					worldPosition += normals[i] * 0.1f;
+                    Instantiate(cubePrefab, worldPosition, quaternion.identity);
+                }
+            }
+        }
+	}
+
 
 	public void LoadGenerationData()
 	{

@@ -740,6 +740,8 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 4ea24032fa3e71a4fae0169d57697b45, type: 2}
   rawDensityTexture: {fileID: 82705580}
   processedDensityTexture: {fileID: 1290844472}
+  cubePrefab: {fileID: 8988388570186741974, guid: 1ee57f504d700d44d828b41a1c737fbd,
+    type: 3}
   fpData: {fileID: 11400000, guid: 98cf134a1704d634fb57ac07a869b864, type: 2}
 --- !u!4 &394546156
 Transform:
