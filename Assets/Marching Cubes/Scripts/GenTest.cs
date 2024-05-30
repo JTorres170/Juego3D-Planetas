@@ -45,6 +45,7 @@ public class GenTest : MonoBehaviour
 	System.Diagnostics.Stopwatch timer_processVertexData;
 	RenderTexture originalMap;
 
+	// Prefabs
 	public GameObject cubePrefab;
 
 	// Serializable object

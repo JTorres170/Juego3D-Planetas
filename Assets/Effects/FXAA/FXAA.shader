@@ -1,6 +1,4 @@
-﻿//FXAA effect by Jasper Flick (Catlike Coding)
-// https://catlikecoding.com/unity/tutorials/advanced-rendering/fxaa/
-Shader "Hidden/FXAA" {
+﻿Shader "Hidden/FXAA" {
 	Properties {
 		_MainTex ("Texture", 2D) = "white" {}
 	}
@@ -241,7 +239,7 @@ Shader "Hidden/FXAA" {
 		ZTest Always
 		ZWrite Off
 
-		Pass { // 0 luminancePass
+		Pass {
 			CGPROGRAM
 				#pragma vertex VertexProgram
 				#pragma fragment FragmentProgram
@@ -260,7 +258,7 @@ Shader "Hidden/FXAA" {
 			ENDCG
 		}
 
-		Pass { // 1 fxaaPass
+		Pass {
 			CGPROGRAM
 				#pragma vertex VertexProgram
 				#pragma fragment FragmentProgram

@@ -1,7 +1,4 @@
-﻿// FXAA effect by Jasper Flick (Catlike Coding)
-// https://catlikecoding.com/unity/tutorials/advanced-rendering/fxaa/
-
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 
 public class FXAAEffect : MonoBehaviour {

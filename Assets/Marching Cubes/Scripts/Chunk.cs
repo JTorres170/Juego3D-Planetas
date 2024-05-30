@@ -23,7 +23,7 @@ public class Chunk
 	List<Vector3> processedNormals;
 	List<int> processedTriangles;
 
-
+	// Constructor
 	public Chunk(Vector3Int coord, Vector3 centre, float size, int numPointsPerAxis, GameObject meshHolder)
 	{
 		this.id = coord;
@@ -37,7 +37,6 @@ public class Chunk
 		int numPointsTotal = numPointsPerAxis * numPointsPerAxis * numPointsPerAxis;
 		ComputeHelper.CreateStructuredBuffer<PointData>(ref pointsBuffer, numPointsTotal);
 
-		// Mesh rendering and collision components
 		filter = meshHolder.AddComponent<MeshFilter>();
 		renderer = meshHolder.AddComponent<MeshRenderer>();
 
@@ -101,12 +100,6 @@ public class Chunk
 		collider.sharedMesh = mesh;
 	}
 
-	public struct PointData
-	{
-		public Vector3 position;
-		public Vector3 normal;
-		public float density;
-	}
 
 	public void AddCollider()
 	{
@@ -123,9 +116,21 @@ public class Chunk
 		ComputeHelper.Release(pointsBuffer);
 	}
 
+	/*
+	parece ser no utilizado
 	public void DrawBoundsGizmo(Color col)
 	{
 		Gizmos.color = col;
 		Gizmos.DrawWireCube(centre, Vector3.one * size);
+	}
+	*/
+
+	// Data sctucture
+	[System.Serializable]
+	public struct PointData
+	{
+		public Vector3 position;
+		public Vector3 normal;
+		public float density;
 	}
 }

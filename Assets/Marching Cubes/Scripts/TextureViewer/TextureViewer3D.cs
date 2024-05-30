@@ -11,15 +11,8 @@ public class TextureViewer3D : MonoBehaviour
 
 	void Start()
 	{
-		
 		material = GetComponentInChildren<MeshRenderer>().material;
-		//
 	}
-
-	public void Display() {
-
-	}
-
 	
 	void Update()
 	{
