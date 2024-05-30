@@ -136,11 +136,6 @@ public class CloudManager : MonoBehaviour
 		cloudMaterial.SetInt("numStepsMain", numStepsMain);
 		cloudMaterial.SetVector("dirToSun", EffectManager.DirToSun);
 
-		// Bit does the following:
-		// - sets _MainTex property on material to the source texture
-		// - sets the render target to the destination texture
-		// - draws a full-screen quad
-		// This copies the src texture to the dest texture, with whatever modifications the shader makes
 		Graphics.Blit(src, cloudRender, cloudMaterial);
 
 		blur.Blur(cloudRender, cloudBlurSize, cloudBlurStrength);

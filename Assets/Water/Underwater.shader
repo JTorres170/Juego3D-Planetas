@@ -6,7 +6,6 @@ Shader "Hidden/Underwater"
 	}
 	SubShader
 	{
-		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
 
 		Pass
@@ -59,35 +58,29 @@ Shader "Hidden/Underwater"
 			float2 squareUV(float2 uv) {
 				float width = _ScreenParams.x;
 				float height =_ScreenParams.y;
-				//float minDim = min(width, height);
 				float scale = 1000;
 				float x = uv.x * width;
 				float y = uv.y * height;
 				return float2 (x/scale, y/scale);
 			}
 
-			// Returns vector (dstToSphere, dstThroughSphere)
-			// If ray origin is inside sphere, dstToSphere = 0
-			// If ray misses sphere, dstToSphere = maxValue; dstThroughSphere = 0
 			float2 raySphere(float3 sphereCentre, float sphereRadius, float3 rayOrigin, float3 rayDir) {
 				float3 offset = rayOrigin - sphereCentre;
-				float a = 1; // Set to dot(rayDir, rayDir) if rayDir might not be normalized
+				float a = 1;
 				float b = 2 * dot(offset, rayDir);
 				float c = dot (offset, offset) - sphereRadius * sphereRadius;
-				float d = b * b - 4 * a * c; // Discriminant from quadratic formula
+				float d = b * b - 4 * a * c;
 
-				// Number of intersections: 0 when d < 0; 1 when d = 0; 2 when d > 0
 				if (d > 0) {
 					float s = sqrt(d);
 					float dstToSphereNear = max(0, (-b - s) / (2 * a));
 					float dstToSphereFar = (-b + s) / (2 * a);
 
-					// Ignore intersections that occur behind the ray
 					if (dstToSphereFar >= 0) {
 						return float2(dstToSphereNear, dstToSphereFar - dstToSphereNear);
 					}
 				}
-				// Ray did not intersect sphere
+
 				static const float maxFloat = 3.402823466e+38;
 				return float2(maxFloat, 0);
 			}
@@ -98,7 +91,6 @@ Shader "Hidden/Underwater"
 				float blueNoise = tex2D(_BlueNoise, squareUV(i.uv) * params.x);
 				blueNoise = blueNoise * 2 - 1;
 				blueNoise = sign(blueNoise) * (1 - sqrt(1 - abs(blueNoise)));
-				//return blueNoise;
 
 				float4 originalCol = tex2D(_MainTex, i.uv);
 
@@ -114,7 +106,6 @@ Shader "Hidden/Underwater"
 				float dstThroughOceanShell = hitInfo.y;
 				float3 rayOceanIntersectPos = rayPos + rayDir * dstToOcean - oceanCentre;
 
-				// dst that view ray travels through ocean (before hitting terrain / exiting ocean)
 				float oceanViewDepth = min(dstThroughOceanShell, sceneDepth - dstToOcean);
 
 
@@ -123,7 +114,6 @@ Shader "Hidden/Underwater"
 
 					float dstAboveWater = oceanRadius - length(clipPlanePos - oceanCentre);
 					if (dstAboveWater > 0) {
-						// Looking through water to top layer of ocean
 						
 
 						
@@ -136,9 +126,7 @@ Shader "Hidden/Underwater"
 
 						float4 waterCol = lerp(underwaterFarCol, underwaterNearCol, visibility);
 						float4 finalCol = lerp(waterCol, bgCol, visibility);
-						if (dstThroughOceanShell <= oceanViewDepth) {
-							//return 1;
-						}
+						
 						return finalCol;
 
 						return bgCol;

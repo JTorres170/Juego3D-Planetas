@@ -7,8 +7,6 @@ Shader "Hidden/Clouds"
 	}
 	SubShader
 	{
-		
-		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
 
 		Pass
@@ -20,7 +18,6 @@ Shader "Hidden/Clouds"
 
 			#include "UnityCG.cginc"
 
-			// vertex input: position, UV
 			struct appdata {
 				float4 vertex : POSITION;
 				float2 uv : TEXCOORD0;
@@ -36,14 +33,11 @@ Shader "Hidden/Clouds"
 				v2f output;
 				output.pos = UnityObjectToClipPos(v.vertex);
 				output.uv = v.uv;
-				// Camera space matches OpenGL convention where cam forward is -z. In unity forward is positive z.
-				// (https://docs.unity3d.com/ScriptReference/Camera-cameraToWorldMatrix.html)
 				float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2 - 1, 0, -1));
 				output.viewVector = mul(unity_CameraToWorld, float4(viewVector,0));
 				return output;
 			}
 
-			// Textures
 			Texture3D<float4> NoiseTex;
 			Texture3D<float4> DetailNoiseTex;
 			Texture2D<float4> BlueNoise;
@@ -56,7 +50,6 @@ Shader "Hidden/Clouds"
 			sampler2D _CameraDepthTexture;
 			sampler2D _LastCameraDepthTexture;
 
-			// Shape settings
 			float4 params;
 			float densityMultiplier;
 			float densityOffset;
@@ -70,10 +63,8 @@ Shader "Hidden/Clouds"
 			float innerShellRadius;
 			float outerShellRadius;
 
-			// Anim settings
 			float animSpeed;
 
-			// March settings
 			int numStepsLight;
 			int numStepsMain;
 			float minMainStepSize;
@@ -82,7 +73,6 @@ Shader "Hidden/Clouds"
 			float3 shapeOffset;
 			float3 detailOffset;
 
-			// Light settings
 			float lightAbsorptionTowardSun;
 			float lightAbsorptionThroughCloud;
 			float darknessThreshold;
@@ -98,35 +88,26 @@ Shader "Hidden/Clouds"
 				return float2 (x/scale, y/scale);
 			}
 
-
-			// Returns vector (dstToSphere, dstThroughSphere)
-			// If ray origin is inside sphere, dstToSphere = 0
-			// If ray misses sphere, dstToSphere = maxValue; dstThroughSphere = 0
 			float2 raySphere(float3 sphereCentre, float sphereRadius, float3 rayOrigin, float3 rayDir) {
 				float3 offset = rayOrigin - sphereCentre;
-				float a = 1; // Set to dot(rayDir, rayDir) if rayDir might not be normalized
+				float a = 1;
 				float b = 2 * dot(offset, rayDir);
 				float c = dot (offset, offset) - sphereRadius * sphereRadius;
-				float d = b * b - 4 * a * c; // Discriminant from quadratic formula
+				float d = b * b - 4 * a * c;
 
-				// Number of intersections: 0 when d < 0; 1 when d = 0; 2 when d > 0
 				if (d > 0) {
 					float s = sqrt(d);
 					float dstToSphereNear = max(0, (-b - s) / (2 * a));
 					float dstToSphereFar = (-b + s) / (2 * a);
 
-					// Ignore intersections that occur behind the ray
 					if (dstToSphereFar >= 0) {
 						return float2(dstToSphereNear, dstToSphereFar - dstToSphereNear);
 					}
 				}
-				// Ray did not intersect sphere
 				static const float maxFloat = 3.402823466e+38;
 				return float2(maxFloat, 0);
 			}
 
-			// Returns (dstToShell, dstThroughShell)
-			// (Shell is defined by two spheres; the shell volume is the space between them)
 			float2 rayShellInfo(float3 rayPos, float3 rayDir) {
 				float2 innerSphereHitInfo = raySphere(0, innerShellRadius, rayPos, rayDir);
 				float2 outerSphereHitInfo = raySphere(0, outerShellRadius, rayPos, rayDir);
@@ -139,17 +120,14 @@ Shader "Hidden/Clouds"
 				float dstToShell = 0;
 				float dstThroughShell = 0;
 
-				// View point is from outside the outer shell
 				if (dstFromCentre > outerShellRadius) {
 					dstToShell = dstToOuterSphere;
 					dstThroughShell = (dstThroughInnerSphere > 0) ? dstToInnerSphere - dstToOuterSphere : dstThroughOuterSphere;
 				}
-				// View point is inside the shell
 				else if (dstFromCentre > innerShellRadius) {
 					dstToShell = 0;
 					dstThroughShell = (dstThroughInnerSphere > 0) ? dstToInnerSphere : dstThroughOuterSphere;
 				}
-				// View point is inside the inner shell
 				else {
 					dstToShell = dstThroughInnerSphere;
 					dstThroughShell = dstThroughOuterSphere - dstThroughInnerSphere;
@@ -160,7 +138,6 @@ Shader "Hidden/Clouds"
 
 			
 
-			// Henyey-Greenstein
 			float hg(float a, float g) {
 				float g2 = g*g;
 				return (1-g2) / (4*3.1415*pow(1+g2-2*g*(a), 1.5));
@@ -174,7 +151,7 @@ Shader "Hidden/Clouds"
 
 			float beer(float d) {
 				float beer = exp(-d);
-				return beer;//
+				return beer;
 			}
 
 			float remap(float v, float minOld, float maxOld, float minNew, float maxNew) {
@@ -201,22 +178,17 @@ Shader "Hidden/Clouds"
 			
 				float heightGradient = saturate(heightPercent/gMin) * saturate((1-heightPercent)/(1-gMax));
 	
-				// Calculate base shape density
 				float4 shapeNoise = NoiseTex.SampleLevel(samplerNoiseTex, shapeSamplePos, mipLevel);
 				float4 normalizedShapeWeights = shapeNoiseWeights / dot(shapeNoiseWeights, 1);
 				float shapeFBM = dot(shapeNoise, normalizedShapeWeights) * heightGradient;
 				float baseShapeDensity = shapeFBM + densityOffset * 0.1;
 
-				// Save sampling from detail tex if shape density <= 0
 				if (baseShapeDensity > 0) {
-					// Sample detail noise
 					float3 detailSamplePos = uvw*detailNoiseScale + detailOffset;
 					float4 detailNoise = DetailNoiseTex.SampleLevel(samplerDetailNoiseTex, detailSamplePos, mipLevel);
 					float3 normalizedDetailWeights = detailWeights / dot(detailWeights, 1);
 					float detailFBM = dot(detailNoise, normalizedDetailWeights);
-					//detailFBM = 1;
 
-					// Subtract detail noise from base shape (weighted by inverse density so that edges get eroded more than centre)
 					float oneMinusShape = 1 - shapeFBM;
 					float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
 					float cloudDensity = baseShapeDensity - (1-detailFBM) * detailErodeWeight * detailNoiseWeight;
@@ -227,7 +199,6 @@ Shader "Hidden/Clouds"
 				return finalDensity;
 			}
 
-			// Calculate proportion of light that reaches the given point from the lightsource
 			float lightmarch(float3 rayOrigin) {
 	
 				float dstThroughShellToSun = raySphere(0, outerShellRadius, rayOrigin, dirToSun).y;
@@ -265,7 +236,6 @@ Shader "Hidden/Clouds"
 						lightEnergy += density * stepSize * transmittance * lightTransmittance * phaseVal;
 						transmittance *= exp(-density * stepSize * lightAbsorptionThroughCloud);
 					
-						// Exit early if T is close to zero as further samples won't affect the result much
 						if (transmittance < 0.01) {
 							break;
 						}
@@ -280,12 +250,10 @@ Shader "Hidden/Clouds"
 		
 			float4 frag (v2f i) : SV_Target
 			{
-				// Create ray
 				float3 camPos = _WorldSpaceCameraPos;
 				float viewLength = length(i.viewVector);
 				float3 rayDir = i.viewVector / viewLength;
 				
-				// Depth and cloud container intersection info:
 				float nonlin_depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv);
 				float geometryDepth = LinearEyeDepth(nonlin_depth) * viewLength;
 
@@ -307,12 +275,10 @@ Shader "Hidden/Clouds"
 					float transmittance = 1;
 					float3 lightEnergy = 0;
 					
-					// March through near section of shell
 					float4 lightInfo = march(shellEntryPoint, rayDir, dstThroughShell - randomOffset, transmittance, lightEnergy);
 					lightEnergy = lightInfo.xyz;
 					transmittance = lightInfo.w;
 
-					// March through far section of shell
 					float3 rayExitPoint = shellEntryPoint + rayDir * (dstThroughShell + 0.1);
 					shellHitinfo = rayShellInfo(rayExitPoint, rayDir);
 					dstToShell = shellHitinfo.x;
@@ -325,8 +291,7 @@ Shader "Hidden/Clouds"
 						transmittance = lightInfo.w;
 					}
 
-					// Add clouds to background
-					float lightIntensity = 1.25; // Todo: get from light (not using _LightPos because glitches when instantiating point lights)
+					float lightIntensity = 1.25;
 					float3 cloudCol = lightEnergy * lightIntensity;
 					return float4(cloudCol, transmittance);
 				}

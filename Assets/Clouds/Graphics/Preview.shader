@@ -36,7 +36,6 @@ Shader "Unlit/Preview"
 			Texture3D<float4> NoiseTex;
 			SamplerState samplerNoiseTex;
 
-			// Debug settings:
 			int debugGreyscale;
 			int debugShowAllChannels;
 			float debugNoiseSliceDepth;

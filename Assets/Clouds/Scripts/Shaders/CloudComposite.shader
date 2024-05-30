@@ -6,13 +6,12 @@ Shader "Hidden/CloudComposite"
 	}
 	SubShader
 	{
-		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
 
 		Pass
 		{
 			CGPROGRAM
-			#pragma vertex vert
+			#pragma vertex vert	
 			#pragma fragment frag
 
 			#include "UnityCG.cginc"

@@ -39,7 +39,6 @@ public class NoiseGenerator : MonoBehaviour
 	[Range(0, 1)]
 	public float viewerSize = 1;
 
-	// Internal
 	List<ComputeBuffer> buffersToRelease;
 	bool settingsChangedSinceLastUpdate;
 
@@ -73,8 +72,6 @@ public class NoiseGenerator : MonoBehaviour
 			UpdateSettings(detailB, detailTexture, new Vector3(0, 0, 1));
 
 		}
-
-
 	}
 
 	void UpdateSettings(WorleyNoiseSettings settings, RenderTexture texture, Vector3 channelMask)
@@ -88,27 +85,21 @@ public class NoiseGenerator : MonoBehaviour
 
 		int texSize = texture.width;
 
-		// Set values:
 		noiseCompute.SetFloat("persistence", settings.persistence);
 		noiseCompute.SetInt("resolution", texSize);
 		noiseCompute.SetVector("channelMask", channelMask);
 
-		// Set noise gen kernel data:
 		noiseCompute.SetTexture(0, "Result", texture);
 		var minMaxBuffer = CreateBuffer(new int[] { int.MaxValue, 0 }, sizeof(int), "minMax", 0);
 		UpdateWorley(settings);
-		//var noiseValuesBuffer = CreateBuffer (activeNoiseValues, sizeof (float) * 4, "values");
 
-		// Dispatch noise gen kernel
 		ComputeHelper.Dispatch(noiseCompute, texSize, texSize, texSize, 0);
 
-		// Set normalization kernel data:
 		noiseCompute.SetBuffer(1, "minMax", minMaxBuffer);
 		noiseCompute.SetTexture(1, "Result", texture);
-		// Dispatch normalization kernel
+
 		ComputeHelper.Dispatch(noiseCompute, texSize, texSize, texSize, 1);
 
-		// Release buffers
 		foreach (var buffer in buffersToRelease)
 		{
 			buffer.Release();
@@ -176,7 +167,6 @@ public class NoiseGenerator : MonoBehaviour
 		CreateBuffer(points, sizeof(float) * 3, bufferName);
 	}
 
-	// Create buffer with some data, and set in shader. Also add to list of buffers to be released
 	ComputeBuffer CreateBuffer(System.Array data, int stride, string bufferName, int kernel = 0)
 	{
 		var buffer = new ComputeBuffer(data.Length, stride, ComputeBufferType.Structured);
@@ -218,7 +208,6 @@ public class NoiseGenerator : MonoBehaviour
 			texture.name = name;
 
 			texture.Create();
-			//Load(name, texture);
 		}
 		texture.wrapMode = TextureWrapMode.Repeat;
 		texture.filterMode = FilterMode.Bilinear;

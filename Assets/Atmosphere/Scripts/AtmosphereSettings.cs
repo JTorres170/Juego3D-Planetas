@@ -34,9 +34,6 @@ public class AtmosphereSettings : ScriptableObject
 	public float originalColourStrength = 180;
 	public float overlayStrength = 0.5f;
 
-	//public float atmosphereScale = 0.5f;
-	//public float bodyRadius = 100;
-
 	RenderTexture opticalDepthTexture;
 	bool settingsUpToDate;
 
@@ -54,7 +51,6 @@ public class AtmosphereSettings : ScriptableObject
 			{
 				PrecomputeOutScattering();
 			}
-			//float atmosphereRadius = (1 + atmosphereScale) * bodyRadius;
 
 			material.SetVector("params", testParams);
 			material.SetInt("numInScatteringPoints", inScatteringPoints);
@@ -69,7 +65,6 @@ public class AtmosphereSettings : ScriptableObject
 			material.SetVector("planetCentre", Vector3.zero);
 			material.SetFloat("oceanRadius", 0);
 
-			// Strength of (rayleigh) scattering is inversely proportional to wavelength^4
 			float scatterX = Pow(400 / wavelengths.x, 4);
 			float scatterY = Pow(400 / wavelengths.y, 4);
 			float scatterZ = Pow(400 / wavelengths.z, 4);

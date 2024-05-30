@@ -6,7 +6,6 @@ Shader "Hidden/Atmosphere"
 	}
 	SubShader
 	{
-		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
 
 		Pass
@@ -16,7 +15,6 @@ Shader "Hidden/Atmosphere"
 			#pragma fragment frag
 
 			#include "UnityCG.cginc"
-			//
 
 			struct appdata {
 					float4 vertex : POSITION;
@@ -33,8 +31,6 @@ Shader "Hidden/Atmosphere"
 					v2f output;
 					output.pos = UnityObjectToClipPos(v.vertex);
 					output.uv = v.uv;
-					// Camera space matches OpenGL convention where cam forward is -z. In unity forward is positive z.
-					// (https://docs.unity3d.com/ScriptReference/Camera-cameraToWorldMatrix.html)
 					float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv.xy * 2 - 1, 0, -1));
 					output.viewVector = mul(unity_CameraToWorld, float4(viewVector,0));
 					return output;
@@ -43,40 +39,31 @@ Shader "Hidden/Atmosphere"
 			float2 squareUV(float2 uv) {
 				float width = _ScreenParams.x;
 				float height =_ScreenParams.y;
-				//float minDim = min(width, height);
 				float scale = 1000;
 				float x = uv.x * width;
 				float y = uv.y * height;
 				return float2 (x/scale, y/scale);
 			}
 
-			// Returns vector (dstToSphere, dstThroughSphere)
-			// If ray origin is inside sphere, dstToSphere = 0
-			// If ray misses sphere, dstToSphere = maxValue; dstThroughSphere = 0
 			float2 raySphere(float3 sphereCentre, float sphereRadius, float3 rayOrigin, float3 rayDir) {
 				float3 offset = rayOrigin - sphereCentre;
-				float a = 1; // Set to dot(rayDir, rayDir) if rayDir might not be normalized
+				float a = 1;
 				float b = 2 * dot(offset, rayDir);
 				float c = dot (offset, offset) - sphereRadius * sphereRadius;
-				float d = b * b - 4 * a * c; // Discriminant from quadratic formula
+				float d = b * b - 4 * a * c;
 
-				// Number of intersections: 0 when d < 0; 1 when d = 0; 2 when d > 0
 				if (d > 0) {
 					float s = sqrt(d);
 					float dstToSphereNear = max(0, (-b - s) / (2 * a));
 					float dstToSphereFar = (-b + s) / (2 * a);
 
-					// Ignore intersections that occur behind the ray
 					if (dstToSphereFar >= 0) {
 						return float2(dstToSphereNear, dstToSphereFar - dstToSphereNear);
 					}
 				}
-				// Ray did not intersect sphere
 				static const float maxFloat = 3.402823466e+38;
 				return float2(maxFloat, 0);
 			}
-
-
 
 			sampler2D _BlueNoise;
 			sampler2D _MainTex;
@@ -92,7 +79,6 @@ Shader "Hidden/Atmosphere"
 			float atmosphereRadius;
 			float planetRadius;
 
-			// Paramaters
 			int numInScatteringPoints;
 			int numOpticalDepthPoints;
 			float intensity;
@@ -167,14 +153,8 @@ Shader "Hidden/Atmosphere"
 				}
 				inScatteredLight *= scatteringCoefficients * intensity * stepSize / planetRadius;
 				inScatteredLight += blueNoise * 0.01;
-			
-				// Attenuate brightness of original col (i.e light reflected from planet surfaces)
-				// This is a hack, TODO: figure out a proper way to do this
-			
 
 				float w = saturate(dstToSurface / originalColourStrength);
-				//w = exp(-dstToSurface * params.y);
-
 				
 				return (originalCol + inScatteredLight * overlayStrength) * (1-w) + inScatteredLight * w;
 			}
@@ -204,7 +184,6 @@ Shader "Hidden/Atmosphere"
 				if (dstThroughAtmosphere > 0) {
 					const float epsilon = 0.0001;
 					float3 pointInAtmosphere = rayOrigin + rayDir * (dstToAtmosphere + epsilon);
-					// Hacky sun render:
 					const float sunPow = 200;
 					float3 sunTint = float3(255,234,166) / 255.0;
 					float3 light = calculateLight(pointInAtmosphere, rayDir, dstThroughAtmosphere - epsilon * 2, originalCol, i.uv, dstToSurface);

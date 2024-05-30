@@ -82,24 +82,8 @@ public class FirstPersonController : MonoBehaviour
 
 	void Update()
 	{
-		// Feature for development
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			debug_stopMovement = !debug_stopMovement;
-
-			Cursor.visible = debug_stopMovement;
-			Cursor.lockState = (debug_stopMovement) ? CursorLockMode.None : CursorLockMode.Locked;
-
-			if (debug_stopMovement)
-			{
-				desiredLocalVelocity = Vector3.zero;
-				rigidBody.velocity = Vector3.zero;
-			}
-
-		}
-
 		// Pause menu
-		if (Input.GetKeyDown(KeyCode.P))
+		if (Input.GetKeyDown(KeyCode.Escape))
 		{
 			debug_stopMovement = !debug_stopMovement;
 

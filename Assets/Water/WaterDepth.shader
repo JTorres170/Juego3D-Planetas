@@ -20,14 +20,13 @@ Shader "Custom/Water Depth Replacement"
 			{
 				v2f o;
 
-				// Vertex wave anim
 				float3 worldPos =  mul(unity_ObjectToWorld,v.vertex).xyz;
 
 				float vertexAnimWeight = length(worldPos - _WorldSpaceCameraPos);
 				vertexAnimWeight = saturate(pow(vertexAnimWeight / 10, 3));
 
 				float waveAnimDetail = 100;
-				float maxWaveAmplitude = 0.001 * vertexAnimWeight; // 0.001
+				float maxWaveAmplitude = 0.001 * vertexAnimWeight;
 				float waveAnimSpeed = 1;
 
 				float3 worldNormal = normalize(mul(unity_ObjectToWorld, float4(v.normal, 0)).xyz);
