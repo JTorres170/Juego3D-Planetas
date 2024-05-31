@@ -23,10 +23,9 @@ Shader "Custom/Terrain"
 		LOD 200
 
 		CGPROGRAM
-		// Physically based Standard lighting model, and enable shadows on all light types
+
 		#pragma surface surf Standard fullforwardshadows
 
-		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
 
@@ -76,14 +75,11 @@ Shader "Custom/Terrain"
 
 			float3 t = worldToTexPos(IN.worldPos);
 			float density = tex3D(DensityTex, t);
-			// 0 = flat, 0.5 = vertical, 1 = flat (but upside down)
 			float steepness = 1 - (dot(normalize(IN.worldPos), IN.worldNormal) * 0.5 + 0.5);
 			float dstFromCentre = length(IN.worldPos);
 
 			float4 noise = triplanarOffset(IN.worldPos, IN.worldNormal, 30, _NoiseTex, 0);
 			float4 noise2 = triplanarOffset(IN.worldPos, IN.worldNormal, 50, _NoiseTex, 0);
-			//float angle01 = dot(normalize(IN.worldPos), IN.worldNormal) * 0.5 + 0.5;
-			//o.Albedo = lerp(float3(1,0,0), float3(0,1,0), smoothstep(0.4,0.6,angle01));
 
 			float metallic = 0;
 			float rockMetalStrength = 0.4;
@@ -102,14 +98,8 @@ Shader "Custom/Terrain"
 
 				float rockWeight = smoothstep(0.24 + n, 0.24 + 0.001 + n, steepness);
 				o.Albedo = lerp(grassCol, rockCol, rockWeight);
-				//o.Albedo = steepness > _Test;
 				metallic = lerp(0, rockMetalStrength, rockWeight);
 			}
-
-			//o.Albedo = dstFromCentre > oceanRadius;
-
-			
-			//o.Albedo = metallic;
 
 			o.Metallic = metallic;
 			o.Smoothness = _Glossiness;

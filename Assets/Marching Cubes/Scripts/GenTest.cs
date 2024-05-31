@@ -29,7 +29,6 @@ public class GenTest : MonoBehaviour
 	public Material material;
 
 
-	// Private
 	ComputeBuffer triangleBuffer;
 	ComputeBuffer triCountBuffer;
 	[HideInInspector] public RenderTexture rawDensityTexture;
@@ -37,7 +36,6 @@ public class GenTest : MonoBehaviour
 	Chunk[] chunks;
 
 	VertexData[] vertexDataArray;
-
 	int totalVerts;
 
 	// Stopwatches
@@ -51,23 +49,10 @@ public class GenTest : MonoBehaviour
 	// Serializable object
 	public FirstPlanetData fpData;
 
-	void RandomGenerationVar()
-	{
-		noiseScale = UnityEngine.Random.Range(0.1f, 1.0f);
-		noiseHeightMultiplier = UnityEngine.Random.Range(0.030f, 0.09f);
-		
-		fpData.noiseScale = noiseScale;
-		fpData.noiseHeightMultiplier = noiseHeightMultiplier;
-	}
 
-	public void GenerateTerrain()
-	{
-		Start();
-	}
-
+	// Start
 	void Start()
 	{
-		Debug.Log("Generating terrain...");
 		RandomGenerationVar();
 		InitTextures();
 		CreateBuffers();
@@ -83,19 +68,21 @@ public class GenTest : MonoBehaviour
 		GenerateRandomPrefabs();
 	}
 
-	void LoadSave()
+	// Randomize the basic variables of the planet for a random form of it
+	void RandomGenerationVar()
 	{
-		SceneManager.LoadScene( SceneManager.GetActiveScene().name );
+		noiseScale = UnityEngine.Random.Range(0.1f, 1.0f);
+		noiseHeightMultiplier = UnityEngine.Random.Range(0.030f, 0.09f);
+		
+		fpData.noiseScale = noiseScale;
+		fpData.noiseHeightMultiplier = noiseHeightMultiplier;
 	}
 
+	// Texture functions
+
+	// Generates the textures of the terrain
 	void InitTextures()
 	{
-
-		// Explanation of texture size:
-		// Each pixel maps to one point.
-		// Each chunk has "numPointsPerAxis" points along each axis
-		// The last points of each chunk overlap in space with the first points of the next chunk
-		// Therefore we need one fewer pixel than points for each added chunk
 		int size = numChunks * (numPointsPerAxis - 1) + 1;
 		Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
 		Create3DTexture(ref processedDensityTexture, size, "Processed Density Texture");
@@ -105,7 +92,6 @@ public class GenTest : MonoBehaviour
 			processedDensityTexture = rawDensityTexture;
 		}
 
-		// Set textures on compute shaders
 		densityCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
 		editCompute.SetTexture(0, "EditTexture", rawDensityTexture);
 		blurCompute.SetTexture(0, "Source", rawDensityTexture);
@@ -113,110 +99,34 @@ public class GenTest : MonoBehaviour
 		meshCompute.SetTexture(0, "DensityTexture", (blurCompute) ? processedDensityTexture : rawDensityTexture);
 	}
 
-	void GenerateAllChunks()
+	// Creates the 3D textures for the terrain
+	void Create3DTexture(ref RenderTexture texture, int size, string name)
 	{
-		// Create timers:
-		timer_fetchVertexData = new System.Diagnostics.Stopwatch();
-		timer_processVertexData = new System.Diagnostics.Stopwatch();
-
-		totalVerts = 0;
-		ComputeDensity();
-
-
-		for (int i = 0; i < chunks.Length; i++)
+		var format = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat;
+		if (texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format)
 		{
-			GenerateChunk(chunks[i]);
+			if (texture != null)
+			{
+				texture.Release();
+			}
+			const int numBitsInDepthBuffer = 0;
+			texture = new RenderTexture(size, size, numBitsInDepthBuffer);
+			texture.graphicsFormat = format;
+			texture.volumeDepth = size;
+			texture.enableRandomWrite = true;
+			texture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+
+
+			texture.Create();
 		}
-		Debug.Log("Total verts " + totalVerts);
-
-		// Print timers:
-		Debug.Log("Fetch vertex data: " + timer_fetchVertexData.ElapsedMilliseconds + " ms");
-		Debug.Log("Process vertex data: " + timer_processVertexData.ElapsedMilliseconds + " ms");
-		Debug.Log("Sum: " + (timer_fetchVertexData.ElapsedMilliseconds + timer_processVertexData.ElapsedMilliseconds));
-
-
+		texture.wrapMode = TextureWrapMode.Repeat;
+		texture.filterMode = FilterMode.Bilinear;
+		texture.name = name;
 	}
 
-	void ComputeDensity()
-	{
-		// Get points (each point is a vector4: xyz = position, w = density)
-		int textureSize = rawDensityTexture.width;
+	// Buffer functions
 
-		densityCompute.SetInt("textureSize", textureSize);
-
-		densityCompute.SetFloat("planetSize", boundsSize);
-		densityCompute.SetFloat("noiseHeightMultiplier", noiseHeightMultiplier);
-		densityCompute.SetFloat("noiseScale", noiseScale);
-
-		ComputeHelper.Dispatch(densityCompute, textureSize, textureSize, textureSize);
-
-		ProcessDensityMap();
-	}
-
-	void ProcessDensityMap()
-	{
-		if (blurMap)
-		{
-			int size = rawDensityTexture.width;
-			blurCompute.SetInts("brushCentre", 0, 0, 0);
-			blurCompute.SetInt("blurRadius", blurRadius);
-			blurCompute.SetInt("textureSize", rawDensityTexture.width);
-			ComputeHelper.Dispatch(blurCompute, size, size, size);
-		}
-	}
-
-	void GenerateChunk(Chunk chunk)
-	{
-
-
-		// Marching cubes
-		int numVoxelsPerAxis = numPointsPerAxis - 1;
-		int marchKernel = 0;
-
-
-		meshCompute.SetInt("textureSize", processedDensityTexture.width);
-		meshCompute.SetInt("numPointsPerAxis", numPointsPerAxis);
-		meshCompute.SetFloat("isoLevel", isoLevel);
-		meshCompute.SetFloat("planetSize", boundsSize);
-		triangleBuffer.SetCounterValue(0);
-		meshCompute.SetBuffer(marchKernel, "triangles", triangleBuffer);
-
-		Vector3 chunkCoord = (Vector3)chunk.id * (numPointsPerAxis - 1);
-		meshCompute.SetVector("chunkCoord", chunkCoord);
-
-		ComputeHelper.Dispatch(meshCompute, numVoxelsPerAxis, numVoxelsPerAxis, numVoxelsPerAxis, marchKernel);
-
-		// Create mesh
-		int[] vertexCountData = new int[1];
-		triCountBuffer.SetData(vertexCountData);
-		ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-
-		timer_fetchVertexData.Start();
-		triCountBuffer.GetData(vertexCountData);
-
-		int numVertices = vertexCountData[0] * 3;
-
-		// Fetch vertex data from GPU
-
-		triangleBuffer.GetData(vertexDataArray, 0, 0, numVertices);
-
-		timer_fetchVertexData.Stop();
-
-		//CreateMesh(vertices);
-		timer_processVertexData.Start();
-		chunk.CreateMesh(vertexDataArray, numVertices, useFlatShading);
-		timer_processVertexData.Stop();
-	}
-
-	void Update()
-	{
-		material.SetTexture("DensityTex", originalMap);
-		material.SetFloat("oceanRadius", FindObjectOfType<Water>().radius);
-		material.SetFloat("planetBoundsSize", boundsSize);
-	}
-
-
-
+	// Creates the buffers for the terrain
 	void CreateBuffers()
 	{
 		int numPoints = numPointsPerAxis * numPointsPerAxis * numPointsPerAxis;
@@ -235,16 +145,9 @@ public class GenTest : MonoBehaviour
 		ComputeHelper.Release(triangleBuffer, triCountBuffer);
 	}
 
-	void OnDestroy()
-	{
-		ReleaseBuffers();
-		foreach (Chunk chunk in chunks)
-		{
-			chunk.Release();
-		}
-	}
+	// Chunk functions
 
-
+	// Creates the cunks calling the Chunk class
 	void CreateChunks()
 	{
 		chunks = new Chunk[numChunks * numChunks * numChunks];
@@ -276,87 +179,70 @@ public class GenTest : MonoBehaviour
 		}
 	}
 
-
-	public void Terraform(Vector3 point, float weight, float radius)
+	// Takes the created chunks and generates them
+	void GenerateAllChunks()
 	{
+		// Create timers:
+		timer_fetchVertexData = new System.Diagnostics.Stopwatch();
+		timer_processVertexData = new System.Diagnostics.Stopwatch();
 
-		int editTextureSize = rawDensityTexture.width;
-		float editPixelWorldSize = boundsSize / editTextureSize;
-		int editRadius = Mathf.CeilToInt(radius / editPixelWorldSize);
-		//Debug.Log(editPixelWorldSize + "  " + editRadius);
+		totalVerts = 0;
+		ComputeDensity();
 
-		float tx = Mathf.Clamp01((point.x + boundsSize / 2) / boundsSize);
-		float ty = Mathf.Clamp01((point.y + boundsSize / 2) / boundsSize);
-		float tz = Mathf.Clamp01((point.z + boundsSize / 2) / boundsSize);
 
-		int editX = Mathf.RoundToInt(tx * (editTextureSize - 1));
-		int editY = Mathf.RoundToInt(ty * (editTextureSize - 1));
-		int editZ = Mathf.RoundToInt(tz * (editTextureSize - 1));
-
-		editCompute.SetFloat("weight", weight);
-		editCompute.SetFloat("deltaTime", Time.deltaTime);
-		editCompute.SetInts("brushCentre", editX, editY, editZ);
-		editCompute.SetInt("brushRadius", editRadius);
-
-		editCompute.SetInt("size", editTextureSize);
-		ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
-
-		//ProcessDensityMap();
-		int size = rawDensityTexture.width;
-
-		if (blurMap)
-		{
-			blurCompute.SetInt("textureSize", rawDensityTexture.width);
-			blurCompute.SetInts("brushCentre", editX - blurRadius - editRadius, editY - blurRadius - editRadius, editZ - blurRadius - editRadius);
-			blurCompute.SetInt("blurRadius", blurRadius);
-			blurCompute.SetInt("brushRadius", editRadius);
-			int k = (editRadius + blurRadius) * 2;
-			ComputeHelper.Dispatch(blurCompute, k, k, k);
-		}
-
-		//ComputeHelper.CopyRenderTexture3D(originalMap, processedDensityTexture);
-
-		float worldRadius = (editRadius + 1 + ((blurMap) ? blurRadius : 0)) * editPixelWorldSize;
 		for (int i = 0; i < chunks.Length; i++)
 		{
-			Chunk chunk = chunks[i];
-			if (MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size))
-			{
-
-				chunk.terra = true;
-				GenerateChunk(chunk);
-
-			}
+			GenerateChunk(chunks[i]);
 		}
+		Debug.Log("Total verts " + totalVerts);
+
+		// Print timers:
+		Debug.Log("Fetch vertex data: " + timer_fetchVertexData.ElapsedMilliseconds + " ms");
+		Debug.Log("Process vertex data: " + timer_processVertexData.ElapsedMilliseconds + " ms");
+		Debug.Log("Sum: " + (timer_fetchVertexData.ElapsedMilliseconds + timer_processVertexData.ElapsedMilliseconds));
 	}
 
-	void Create3DTexture(ref RenderTexture texture, int size, string name)
+	// Generates a chunk based on the Marching cubes algorithm
+	void GenerateChunk(Chunk chunk)
 	{
-		//
-		var format = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat;
-		if (texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format)
-		{
-			//Debug.Log ("Create tex: update noise: " + updateNoise);
-			if (texture != null)
-			{
-				texture.Release();
-			}
-			const int numBitsInDepthBuffer = 0;
-			texture = new RenderTexture(size, size, numBitsInDepthBuffer);
-			texture.graphicsFormat = format;
-			texture.volumeDepth = size;
-			texture.enableRandomWrite = true;
-			texture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+		int numVoxelsPerAxis = numPointsPerAxis - 1;
+		int marchKernel = 0;
+
+		meshCompute.SetInt("textureSize", processedDensityTexture.width);
+		meshCompute.SetInt("numPointsPerAxis", numPointsPerAxis);
+		meshCompute.SetFloat("isoLevel", isoLevel);
+		meshCompute.SetFloat("planetSize", boundsSize);
+		triangleBuffer.SetCounterValue(0);
+		meshCompute.SetBuffer(marchKernel, "triangles", triangleBuffer);
+
+		Vector3 chunkCoord = (Vector3)chunk.id * (numPointsPerAxis - 1);
+		meshCompute.SetVector("chunkCoord", chunkCoord);
+
+		ComputeHelper.Dispatch(meshCompute, numVoxelsPerAxis, numVoxelsPerAxis, numVoxelsPerAxis, marchKernel);
+
+		int[] vertexCountData = new int[1];
+		triCountBuffer.SetData(vertexCountData);
+		ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
+
+		timer_fetchVertexData.Start();
+		triCountBuffer.GetData(vertexCountData);
+
+		int numVertices = vertexCountData[0] * 3;
 
 
-			texture.Create();
-		}
-		texture.wrapMode = TextureWrapMode.Repeat;
-		texture.filterMode = FilterMode.Bilinear;
-		texture.name = name;
+		triangleBuffer.GetData(vertexDataArray, 0, 0, numVertices);
+
+		timer_fetchVertexData.Stop();
+
+		timer_processVertexData.Start();
+		chunk.CreateMesh(vertexDataArray, numVertices, useFlatShading);
+		timer_processVertexData.Stop();
 	}
 
-	public void GenerateRandomPrefabs()
+	// Prefabs
+
+	// Generates a prefab at the surface of the mesh of the chunks
+	void GenerateRandomPrefabs()
 	{
 		float spawnProbability = 0.0005f;
 		foreach (Chunk chunk in chunks)
@@ -380,10 +266,104 @@ public class GenTest : MonoBehaviour
         }
 	}
 
+	// Auxiliar functions
 
+	void ComputeDensity()
+	{
+		int textureSize = rawDensityTexture.width;
+
+		densityCompute.SetInt("textureSize", textureSize);
+
+		densityCompute.SetFloat("planetSize", boundsSize);
+		densityCompute.SetFloat("noiseHeightMultiplier", noiseHeightMultiplier);
+		densityCompute.SetFloat("noiseScale", noiseScale);
+
+		ComputeHelper.Dispatch(densityCompute, textureSize, textureSize, textureSize);
+
+		ProcessDensityMap();
+	}
+
+	void ProcessDensityMap()
+	{
+		if (blurMap)
+		{
+			int size = rawDensityTexture.width;
+			blurCompute.SetInts("brushCentre", 0, 0, 0);
+			blurCompute.SetInt("blurRadius", blurRadius);
+			blurCompute.SetInt("textureSize", rawDensityTexture.width);
+			ComputeHelper.Dispatch(blurCompute, size, size, size);
+		}
+	}
+
+	// Terraform method
+	public void Terraform(Vector3 point, float weight, float radius)
+	{
+		int editTextureSize = rawDensityTexture.width;
+		float editPixelWorldSize = boundsSize / editTextureSize;
+		int editRadius = Mathf.CeilToInt(radius / editPixelWorldSize);
+
+		float tx = Mathf.Clamp01((point.x + boundsSize / 2) / boundsSize);
+		float ty = Mathf.Clamp01((point.y + boundsSize / 2) / boundsSize);
+		float tz = Mathf.Clamp01((point.z + boundsSize / 2) / boundsSize);
+
+		int editX = Mathf.RoundToInt(tx * (editTextureSize - 1));
+		int editY = Mathf.RoundToInt(ty * (editTextureSize - 1));
+		int editZ = Mathf.RoundToInt(tz * (editTextureSize - 1));
+
+		editCompute.SetFloat("weight", weight);
+		editCompute.SetFloat("deltaTime", Time.deltaTime);
+		editCompute.SetInts("brushCentre", editX, editY, editZ);
+		editCompute.SetInt("brushRadius", editRadius);
+
+		editCompute.SetInt("size", editTextureSize);
+		ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
+
+		int size = rawDensityTexture.width;
+
+		if (blurMap)
+		{
+			blurCompute.SetInt("textureSize", rawDensityTexture.width);
+			blurCompute.SetInts("brushCentre", editX - blurRadius - editRadius, editY - blurRadius - editRadius, editZ - blurRadius - editRadius);
+			blurCompute.SetInt("blurRadius", blurRadius);
+			blurCompute.SetInt("brushRadius", editRadius);
+			int k = (editRadius + blurRadius) * 2;
+			ComputeHelper.Dispatch(blurCompute, k, k, k);
+		}
+
+		float worldRadius = (editRadius + 1 + ((blurMap) ? blurRadius : 0)) * editPixelWorldSize;
+		for (int i = 0; i < chunks.Length; i++)
+		{
+			Chunk chunk = chunks[i];
+			if (MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size))
+			{
+				chunk.terra = true;
+				GenerateChunk(chunk);
+			}
+		}
+	}
+
+	// It is called when the scene is finished or the game is closed
+	void OnDestroy()
+	{
+		ReleaseBuffers();
+		foreach (Chunk chunk in chunks)
+		{
+			chunk.Release();
+		}
+	}
+
+	// Update function
+	void Update()
+	{
+		material.SetTexture("DensityTex", originalMap);
+		material.SetFloat("oceanRadius", FindObjectOfType<Water>().radius);
+		material.SetFloat("planetBoundsSize", boundsSize);
+	}
+
+	// Loading save system (WYP)
 	public void LoadGenerationData()
 	{
-		LoadSave();
+		SceneManager.LoadScene( SceneManager.GetActiveScene().name );
 	}
 
 }

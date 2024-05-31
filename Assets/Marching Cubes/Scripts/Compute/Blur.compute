@@ -32,10 +32,7 @@ void Blur (int3 id : SV_DispatchThreadID)
 		}
 	}
 
-	//int n = 2 * blurRadius + 1;
-	//int iterations = n * n * n;
 	float average = sum / totalWeight;
 	Result[id] = average;
-	//Result[id] = Source[id];
 }
 

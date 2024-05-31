@@ -16,9 +16,6 @@ float smoothstep(float minVal, float maxVal, float t) {
 [numthreads(8,8,8)]
 void CSMain (int3 id : SV_DispatchThreadID)
 {
-	//if (id.x >= size || id.y >= size || id.z >= size) {
-	//	return;
-	//}
 	const int b = 4;
 	if (id.x >= size-b || id.y >= size-b || id.z >= size-b) {
 		return;
@@ -34,10 +31,6 @@ void CSMain (int3 id : SV_DispatchThreadID)
 	if (sqrDst <= brushRadius * brushRadius) {
 		float dst = sqrt(sqrDst);
 		float brushWeight = 1-smoothstep(brushRadius * 0.7, brushRadius, dst);
-		//brushWeight = 1;
 		EditTexture[id] += weight * deltaTime * brushWeight;
 	}
-	
-
-	//EditTexture[id] = sin(id.x * 2) * 0.2;
 }

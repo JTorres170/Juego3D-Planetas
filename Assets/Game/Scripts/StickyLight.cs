@@ -23,9 +23,6 @@ public class StickyLight : MonoBehaviour
 		this.gravity = gravity;
 		velocity = inheritedVelocity + transform.forward * initialSpeed;
 		terraformer.onTerrainModified += OnTerrainModified;
-		//velocity = transform.forward * initialSpeed;
-		//Debug.Log("Init: " + velocity);
-		//material.SetColor("_EmissionColor", Color.black);
 	}
 
 	void OnTerrainModified()
@@ -39,7 +36,6 @@ public class StickyLight : MonoBehaviour
 
 	void Update()
 	{
-
 		if (stuck)
 		{
 			return;
@@ -52,7 +48,6 @@ public class StickyLight : MonoBehaviour
 		float moveDst = moveAmount.magnitude;
 		Vector3 moveDir = moveAmount / moveDst;
 
-
 		Ray ray = new Ray(transform.position, moveDir);
 		RaycastHit hitInfo;
 		if (Physics.SphereCast(ray, 0.05f, out hitInfo, moveDst, collisionMask))
@@ -61,21 +56,14 @@ public class StickyLight : MonoBehaviour
 
 			lightT.position = hitInfo.point + hitInfo.normal * 0.5f;
 			lightT.forward = hitInfo.normal;
-			//Debug.DrawRay(hitInfo.point, hitInfo.normal, Color.red, 100);
 
 
 			stuck = true;
 			velocity = Vector3.zero;
-			//material.SetColor("_EmissionColor", Color.white);
 		}
 		else
 		{
 			transform.position += moveAmount;
 		}
-
-
-
 	}
-
-
 }

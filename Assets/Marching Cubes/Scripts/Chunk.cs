@@ -17,7 +17,6 @@ public class Chunk
 	public bool terra;
 	public Vector3Int id;
 
-	// Mesh processing
 	Dictionary<int2, int> vertexIndexMap;
 	List<Vector3> processedVertices;
 	List<Vector3> processedNormals;
@@ -50,9 +49,9 @@ public class Chunk
 		processedTriangles = new List<int>();
 	}
 
+	// Creates the mesh of the chunk
 	public void CreateMesh(VertexData[] vertexData, int numVertices, bool useFlatShading)
 	{
-
 		vertexIndexMap.Clear();
 		processedVertices.Clear();
 		processedNormals.Clear();
@@ -100,33 +99,19 @@ public class Chunk
 		collider.sharedMesh = mesh;
 	}
 
-
-	public void AddCollider()
-	{
-		collider.sharedMesh = mesh;
-	}
-
+	// Sets the material of the chunk
 	public void SetMaterial(Material material)
 	{
 		renderer.material = material;
 	}
 
+	// Releases the chunk
 	public void Release()
 	{
 		ComputeHelper.Release(pointsBuffer);
 	}
 
-	/*
-	parece ser no utilizado
-	public void DrawBoundsGizmo(Color col)
-	{
-		Gizmos.color = col;
-		Gizmos.DrawWireCube(centre, Vector3.one * size);
-	}
-	*/
-
 	// Data sctucture
-	[System.Serializable]
 	public struct PointData
 	{
 		public Vector3 position;
