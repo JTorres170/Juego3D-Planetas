@@ -314,35 +314,6 @@ public class FirstPersonController : MonoBehaviour
 		return false;
 	}
 
-
-
-
-	void OnDrawGizmos()
-	{
-		if (Application.isPlaying)
-		{
-
-			bool grounded = IsGrounded();
-
-			Vector3 centre = rigidBody.position;
-			Vector3 upDir = transform.up;
-			Vector3 castOrigin = centre + upDir * (-capsuleCollider.height / 2f + capsuleCollider.radius);
-			float groundedRayRadius = capsuleCollider.radius * groundedRaySizeFactor;
-
-			float groundedRayDst = capsuleCollider.radius - groundedRayRadius + groundedRayLength;
-			Gizmos.color = (grounded) ? Color.green : Color.red;
-			Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, Gizmos.color.b, 0.5f);
-			Gizmos.DrawSphere(castOrigin, groundedRayRadius);
-
-
-			Vector3 collisionSphereTip = castOrigin - upDir * (groundedRayRadius + groundedRayDst);
-			Gizmos.DrawSphere(collisionSphereTip + upDir * groundedRayRadius, groundedRayRadius);
-			Gizmos.color = Color.red;
-			Gizmos.DrawRay(castOrigin - upDir * groundedRayRadius, -upDir * groundedRayDst);
-
-		}
-	}
-
 	public void LoadPlayerData()
 	{
 		transform.position = playerData.playerPosition;

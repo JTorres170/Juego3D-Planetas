@@ -96,13 +96,4 @@ public class Terraformer : MonoBehaviour
 			onTerrainModified?.Invoke();
 		}
 	}
-
-	void OnDrawGizmos()
-	{
-		if (hasHit)
-		{
-			Gizmos.color = Color.green;
-			Gizmos.DrawSphere(hitPoint, 0.25f);
-		}
-	}
 }
